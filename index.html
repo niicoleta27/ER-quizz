@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz – Electronică Reconfigurabilă</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #0f1117;
+    color: #e2e8f0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .container {
+    max-width: 720px;
+    width: 100%;
+  }
+  h1 {
+    text-align: center;
+    font-size: 1.4rem;
+    color: #a78bfa;
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+  }
+  .subtitle {
+    text-align: center;
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-bottom: 28px;
+  }
+
+  /* Topic tabs */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .tab {
+    padding: 7px 16px;
+    border-radius: 20px;
+    border: 1px solid #2d2f3e;
+    background: #1a1d2e;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+  }
+  .tab.active {
+    background: #4c1d95;
+    border-color: #7c3aed;
+    color: #e9d5ff;
+  }
+  .tab:hover:not(.active) {
+    border-color: #7c3aed;
+    color: #c4b5fd;
+  }
+
+  /* Progress */
+  .progress-bar {
+    height: 4px;
+    background: #1e293b;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #7c3aed, #a78bfa);
+    border-radius: 4px;
+    transition: width 0.4s ease;
+  }
+  .progress-text {
+    text-align: right;
+    font-size: 0.75rem;
+    color: #475569;
+    margin-bottom: 8px;
+  }
+
+  /* Card */
+  .card {
+    background: #1a1d2e;
+    border: 1px solid #2d2f3e;
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 16px;
+  }
+  .topic-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    padding: 3px 10px;
+    border-radius: 10px;
+    background: #2d1b69;
+    color: #c4b5fd;
+    margin-bottom: 14px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .question-text {
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: #e2e8f0;
+    margin-bottom: 22px;
+  }
+
+  /* Options */
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .option {
+    padding: 13px 18px;
+    border-radius: 10px;
+    border: 1px solid #2d2f3e;
+    background: #0f1117;
+    color: #cbd5e1;
+    cursor: pointer;
+    font-size: 0.9rem;
+    text-align: left;
+    transition: all 0.15s;
+    line-height: 1.4;
+  }
+  .option:hover:not(:disabled) {
+    border-color: #7c3aed;
+    background: #1e1040;
+    color: #e9d5ff;
+  }
+  .option.correct {
+    border-color: #10b981;
+    background: #052e16;
+    color: #6ee7b7;
+  }
+  .option.wrong {
+    border-color: #ef4444;
+    background: #2d0a0a;
+    color: #fca5a5;
+  }
+  .option:disabled { cursor: default; }
+
+  /* Explanation */
+  .explanation {
+    display: none;
+    margin-top: 18px;
+    padding: 14px 18px;
+    background: #0f172a;
+    border-left: 3px solid #7c3aed;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: #94a3b8;
+  }
+  .explanation.show { display: block; }
+  .explanation strong { color: #c4b5fd; }
+
+  /* Buttons */
+  .btn-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 16px;
+  }
+  .btn {
+    padding: 10px 24px;
+    border-radius: 10px;
+    border: none;
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    background: #7c3aed;
+    color: white;
+  }
+  .btn-primary:hover { background: #6d28d9; }
+  .btn-primary:disabled { background: #2d2f3e; color: #475569; cursor: default; }
+
+  /* Score */
+  .score-panel {
+    display: none;
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .score-panel.show { display: block; }
+  .score-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 4px solid #7c3aed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #a78bfa;
+  }
+  .score-msg {
+    font-size: 1.1rem;
+    color: #e2e8f0;
+    margin-bottom: 8px;
+  }
+  .score-sub {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-bottom: 28px;
+  }
+  .btn-restart {
+    background: #1a1d2e;
+    border: 1px solid #7c3aed;
+    color: #a78bfa;
+    padding: 10px 28px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  .btn-restart:hover { background: #2d1b69; }
+
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>⚡ Quiz – Electronică Reconfigurabilă</h1>
+  <p class="subtitle">Bazat pe slide-urile selectate de profesor • 5 teme</p>
+
+  <div class="tabs" id="tabs"></div>
+
+  <div id="quiz-area">
+    <div class="progress-text" id="prog-text"></div>
+    <div class="progress-bar"><div class="progress-fill" id="prog-fill"></div></div>
+    <div class="card" id="q-card">
+      <div class="topic-badge" id="q-topic"></div>
+      <div class="question-text" id="q-text"></div>
+      <div class="options" id="q-options"></div>
+      <div class="explanation" id="q-explanation"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-next" disabled>Următoarea →</button>
+    </div>
+  </div>
+
+  <div class="score-panel" id="score-panel">
+    <div class="score-circle" id="score-num"></div>
+    <div class="score-msg" id="score-msg"></div>
+    <div class="score-sub" id="score-sub"></div>
+    <button class="btn-restart" onclick="restart()">🔄 Încearcă din nou</button>
+  </div>
+</div>
+
+<script>
+const TOPICS = [
+  { id: 'all', label: '🎯 Toate' },
+  { id: 'soc', label: 'Unit 1 – SoC & IP' },
+  { id: 'flow', label: 'Unit 1 – Design Flow' },
+  { id: 'picoblaze', label: 'Unit 2 – PicoBlaze' },
+  { id: 'microblaze', label: 'Unit 3 – MicroBlaze' },
+  { id: 'axi', label: 'Unit 3 – AXI & Buses' },
+];
+
+const ALL_QUESTIONS = [
+  // ── UNIT 1: SoC & IP ──
+  {
+    topic: 'soc',
+    topicLabel: 'Unit 1 – SoC & IP Cores',
+    q: 'Care este diferența principală dintre Soft IP și Hard IP?',
+    opts: [
+      'Soft IP este mai rapid decât Hard IP',
+      'Soft IP este distribuit ca cod HDL, flexibil și portabil; Hard IP este deja sintetizat, cu timing și layout cunoscute',
+      'Hard IP poate fi modificat de utilizator, Soft IP nu',
+      'Soft IP necesită mai puține resurse FPGA decât Hard IP'
+    ],
+    correct: 1,
+    explanation: '<strong>Soft IP</strong> = cod HDL (VHDL/Verilog), sintetizabil, extensibil, independent de tehnologie. <strong>Hard IP</strong> = rezultatul sintezei, layout și timing cunoscute, performanță predictibilă, ușor de integrat dar nu modificabil. Ex: MicroBlaze și PicoBlaze = Soft IP; ARM Cortex-A9 în Zynq = Hard IP.'
+  },
+  {
+    topic: 'soc',
+    topicLabel: 'Unit 1 – SoC & IP Cores',
+    q: 'Care dintre următoarele afirmații despre un SoC este CORECTĂ?',
+    opts: [
+      'Un microcontroller simplu este considerat SoC',
+      'Un SoC conține doar procesor și memorie',
+      'Un SoC integrează pe un singur chip: procesor, memorie, periferice, acceleratoare HW și poate include FPGA fabric',
+      'SoC-urile nu pot rula sisteme de operare'
+    ],
+    correct: 2,
+    explanation: 'SoC = circuit integrat cu toate componentele unui sistem complet pe un singur chip. Include: CPU, memorie, HW accelerators, periferice, componente analogice, și chiar FPGA fabric (ex. Zynq). <strong>Un microcontroller simplu NU este SoC</strong> — SoC-ul are complexitate mult mai mare.'
+  },
+  {
+    topic: 'soc',
+    topicLabel: 'Unit 1 – SoC & IP Cores',
+    q: 'Ce tip de SoC descrie cel mai bine Zynq-7000 de la Xilinx?',
+    opts: [
+      'MCU-based SoC',
+      'MPU-based SoC',
+      'SoC FPGA / Programmable SoC',
+      'Application-Specific SoC (ASIC)'
+    ],
+    correct: 2,
+    explanation: 'Zynq-7000 este un <strong>SoC FPGA / Programmable SoC</strong>: combină un procesor ARM Cortex-A9 (Hard core) cu FPGA fabric pe același chip. Formula din curs: SoC = CPU + Peripherals + FPGA Fabric pe 1 chip.'
+  },
+  {
+    topic: 'soc',
+    topicLabel: 'Unit 1 – SoC & IP Cores',
+    q: 'Care tip de SoC are MMU, poate rula Linux, și folosește memorie DDR externă?',
+    opts: [
+      'MCU-based SoC',
+      'MPU-based SoC',
+      'Heterogeneous MPSoC',
+      'Application-Specific SoC'
+    ],
+    correct: 1,
+    explanation: '<strong>MPU-based SoC</strong>: CPU(s) puternic + DDR extern + I/O bogat + MMU → poate rula Linux. Spre deosebire de MCU-based SoC care are memorie integrată, consum redus, fără MMU, folosit pentru aplicații real-time simple.'
+  },
+  {
+    topic: 'soc',
+    topicLabel: 'Unit 1 – SoC & IP Cores',
+    q: 'MicroBlaze și PicoBlaze sunt exemple de:',
+    opts: [
+      'Hard IP cores',
+      'Soft IP cores',
+      'ASIC-uri dedicate',
+      'Hard cores ARM'
+    ],
+    correct: 1,
+    explanation: '<strong>MicroBlaze și PicoBlaze sunt Soft IP</strong> — sunt implementați în fabric-ul FPGA (din LUT-uri și flip-flop-uri), distribuiți ca cod HDL de Xilinx. ARM Cortex-A9 în Zynq este Hard IP — procesor fizic dedicat pe chip, nu sintetizat.'
+  },
+
+  // ── UNIT 1: Design Flow ──
+  {
+    topic: 'flow',
+    topicLabel: 'Unit 1 – SoC Design Flow',
+    q: 'Care este rolul FPGA-ului în SoC Design Flow?',
+    opts: [
+      'Înlocuiește permanent chip-ul final în producție',
+      'Permite prototiparea hardware înainte de fabricarea chip-ului real',
+      'Este folosit doar pentru simulare software',
+      'Nu are niciun rol în design flow-ul SoC'
+    ],
+    correct: 1,
+    explanation: 'În SoC Design Flow, FPGA-ul este folosit ca <strong>platformă de prototipare</strong> (Prototype on Platforms e.g., FPGA). Permite verificarea hardware reală înainte de costisitoarea fabricație a chip-ului ASIC. După validare pe FPGA urmează HW/SW Co-verification și apoi Physical Optimization & Fabrication.'
+  },
+  {
+    topic: 'flow',
+    topicLabel: 'Unit 1 – SoC Design Flow',
+    q: 'Care este ordinea corectă în SoC Design Flow?',
+    opts: [
+      'Fabricație → Specificații → HW/SW Partitioning → Prototip FPGA',
+      'Specificații → HW/SW Partitioning → Prototip FPGA → HW/SW Co-verification → Fabricație',
+      'HW/SW Partitioning → Specificații → Fabricație → Simulare',
+      'Simulare → Specificații → HW/SW Partitioning → Fabricație'
+    ],
+    correct: 1,
+    explanation: 'Ordinea din curs: <strong>Specificații → Architecture Design / HW/SW Partitioning → IP Integration → Functional Simulation → Prototype pe FPGA → HW/SW Co-verification → Physical Optimization & Fabrication → PCB → Volume Manufacturing</strong>.'
+  },
+  {
+    topic: 'flow',
+    topicLabel: 'Unit 1 – SoC Design Flow',
+    q: 'Ce înseamnă HW/SW Partitioning în contextul SoC Design Flow?',
+    opts: [
+      'Separarea fizică a chip-ului în două jumătăți',
+      'Decizia arhitectului de sistem despre ce funcționalitate merge în hardware și ce în software',
+      'Împărțirea memoriei între procesor și periferice',
+      'Compilarea codului C pentru procesorul embedded'
+    ],
+    correct: 1,
+    explanation: '<strong>HW/SW Partitioning</strong>: arhitectul de sistem decide care funcționalitate se implementează în HW (acceleratoare, logică dedicată) și care în SW (cod pe procesor), definind și interfețele și protocoalele între HW și SW, și ce IP cores third-party se cumpără.'
+  },
+
+  // ── UNIT 2: PicoBlaze ──
+  {
+    topic: 'picoblaze',
+    topicLabel: 'Unit 2 – PicoBlaze',
+    q: 'Care sunt caracteristicile principale ale procesorului PicoBlaze (KCPSM6)?',
+    opts: [
+      '32-bit RISC, 512 MB RAM, 1 GHz',
+      '8-bit microcontroller, 2 cicli/instrucțiune, max 100 MHz, 96 slices, 256 porturi I/O',
+      '64-bit processor, arhitectură Harvard, 4 GHz',
+      '16-bit DSP, 1024 KB memorie, 50 MHz'
+    ],
+    correct: 1,
+    explanation: 'PicoBlaze KCPSM6: <strong>8-bit microcontroller soft</strong>, 2 cicli/instrucțiune, max 100 MHz → max 100 MIPS. Resurse mici: <strong>96 slices</strong>. 16 registre de 8 biți, 64 bytes memorie de date, <strong>256 porturi I/O</strong>. Avantaj: testat de Xilinx, consum redus. Dezavantaj: set mic de instrucțiuni.'
+  },
+  {
+    topic: 'picoblaze',
+    topicLabel: 'Unit 2 – PicoBlaze',
+    q: 'Care este ordinea corectă a development flow-ului pentru PicoBlaze?',
+    opts: [
+      'Compilare C → Sinteză Vivado → Programare FPGA',
+      'Scriere assembly (.psm) → Asamblare cu KCPSM6.EXE → Generare .vhd ROM → Instanțiere în Block Design',
+      'Scriere VHDL → Simulare → Sinteză → Programare',
+      'Configurare Vitis → Scriere cod C → Compilare → Upload'
+    ],
+    correct: 1,
+    explanation: 'Flow PicoBlaze: <strong>1)</strong> Scrii programul în assembly (.psm) → <strong>2)</strong> Asamblezi cu KCPSM6.EXE → <strong>3)</strong> Se generează fișierul .vhd cu ROM-ul programului → <strong>4)</strong> Instanțiezi KCPSM6 + ROM în Block Design → <strong>5)</strong> Conectezi semnalele (INSTRUCTION[17:0], ADDRESS[9:0], CLK etc.)'
+  },
+  {
+    topic: 'picoblaze',
+    topicLabel: 'Unit 2 – PicoBlaze',
+    q: 'Care este diferența dintre PicoBlaze și MicroBlaze?',
+    opts: [
+      'PicoBlaze este Hard IP, MicroBlaze este Soft IP',
+      'PicoBlaze este 32-bit, MicroBlaze este 8-bit',
+      'PicoBlaze este un microcontroller 8-bit simplu cu resurse minime; MicroBlaze este un procesor RISC 32-bit mult mai puternic, ambele sunt Soft IP',
+      'MicroBlaze nu poate fi folosit pe FPGA Artix-7'
+    ],
+    correct: 2,
+    explanation: 'Ambele sunt <strong>Soft IP</strong> implementate în fabric-ul FPGA. <strong>PicoBlaze</strong>: 8-bit, 96 slices, simplu, pentru control I/O rapid. <strong>MicroBlaze</strong>: 32-bit RISC, mult mai puternic, conectare prin AXI, poate rula sisteme de operare, folosit pentru aplicații embedded complexe.'
+  },
+
+  // ── UNIT 3: MicroBlaze ──
+  {
+    topic: 'microblaze',
+    topicLabel: 'Unit 3 – MicroBlaze',
+    q: 'Ce înseamnă că MicroBlaze are arhitectură Harvard?',
+    opts: [
+      'Este fabricat de Universitatea Harvard',
+      'Are bus-uri separate pentru date și instrucțiuni',
+      'Folosește un singur bus pentru date și instrucțiuni',
+      'Are 2 procesoare pe același chip'
+    ],
+    correct: 1,
+    explanation: '<strong>Arhitectura Harvard</strong> = bus-uri fizic separate pentru memorie de date și memorie de instrucțiuni. MicroBlaze folosește LMB (Local Memory Bus) pentru accesul la memoria locală BRAM. Avantaj: poate accesa simultan date și instrucțiuni, fără conflict pe bus.'
+  },
+  {
+    topic: 'microblaze',
+    topicLabel: 'Unit 3 – MicroBlaze',
+    q: 'Care este diferența dintre RISC și CISC?',
+    opts: [
+      'RISC are instrucțiuni complexe care durează până la 20 cicli; CISC are instrucțiuni simple de 1 ciclu',
+      'RISC are instrucțiuni simple (majoritare 1 ciclu); CISC are instrucțiuni complexe ce pot dura mulți cicli',
+      'RISC este folosit doar pentru FPGA; CISC pentru PC-uri',
+      'Nu există nicio diferență practică între ele'
+    ],
+    correct: 1,
+    explanation: '<strong>RISC</strong> (Reduced Instruction Set Computing): instrucțiuni simple, majoritar 1 ciclu, compilatorul descompune operații complexe. <strong>CISC</strong> (Complex Instruction Set Computing): instrucțiuni complexe, pot dura până la 20 cicli, proiectat pentru programare directă de oameni. MicroBlaze = RISC.'
+  },
+  {
+    topic: 'microblaze',
+    topicLabel: 'Unit 3 – MicroBlaze',
+    q: 'Care este flow-ul corect de development pentru un sistem MicroBlaze?',
+    opts: [
+      'Vitis (SW) → Vivado (HW) → Programare FPGA',
+      'Vivado (Block Design + Bitstream) → Export hardware → Vitis (aplicație C bare-metal) → Programare FPGA',
+      'KCPSM6.EXE → ROM.vhd → Block Design → Programare',
+      'Scriere VHDL → Simulare → Sinteză → Vitis'
+    ],
+    correct: 1,
+    explanation: 'Flow MicroBlaze: <strong>1) Vivado</strong> — creezi Block Design (MicroBlaze + AXI + periferice), sinteză, implementare, generare bitstream → <strong>2) Export hardware</strong> (.xsa) → <strong>3) Vitis</strong> — creezi Platform Project + BSP + aplicație C bare-metal → <strong>4) Programare FPGA</strong> și testare pe board.'
+  },
+  {
+    topic: 'microblaze',
+    topicLabel: 'Unit 3 – MicroBlaze',
+    q: 'Ce este BSP (Board Support Package) în contextul Vitis?',
+    opts: [
+      'Un fișier de constrângeri pentru pinii FPGA',
+      'O colecție de funcții și biblioteci care fac legătura dintre software și hardware, specifice platformei',
+      'Bitstream-ul generat de Vivado',
+      'Programul de asamblare pentru PicoBlaze'
+    ],
+    correct: 1,
+    explanation: '<strong>BSP (Board Support Package)</strong>: conține suite de funcții ce suportă hardware-ul underlying, este adaptat conform descripției platformei hardware, incorporează biblioteci esențiale pentru operarea hardware-ului, și definește mapările pentru Standard Input/Output (STDIN/STDOUT).'
+  },
+
+  // ── UNIT 3: AXI & Buses ──
+  {
+    topic: 'axi',
+    topicLabel: 'Unit 3 – AXI & Buses',
+    q: 'Care tip de AXI este potrivit pentru un periferic simplu cu registre, fără transfer în burst?',
+    opts: [
+      'AXI4 (Full / Memory Mapped)',
+      'AXI4-Lite',
+      'AXI4-Stream',
+      'PLBv46'
+    ],
+    correct: 1,
+    explanation: '<strong>AXI4-Lite</strong>: fără burst, un singur transfer odată (single address, single data), lățime de date 32 sau 64 biți. Perfect pentru periferice simple cu registre: GPIO, UART, perifericul tău custom din Lab 3. AXI4-Full e pentru transfer în burst (memorie DDR). AXI4-Stream e pentru date în flux continuu fără adrese.'
+  },
+  {
+    topic: 'axi',
+    topicLabel: 'Unit 3 – AXI & Buses',
+    q: 'Care este avantajul principal al AXI față de un bus shared (cum era PLB)?',
+    opts: [
+      'AXI este mai ieftin de implementat',
+      'AXI este un bus shared cu arbitraj mai eficient',
+      'AXI este point-to-point (nu shared bus), evitând problemele de arbitraj și permițând pipelining pentru timing closure',
+      'AXI suportă doar un master și un slave'
+    ],
+    correct: 2,
+    explanation: '<strong>AXI = point-to-point</strong>, nu multi-drop bus → fără probleme de arbitraj. Are semnale separate pentru adresă, control și date → permite <strong>pipelining</strong> pentru timing closure. Este standard ARM/AMBA → compatibil cu ecosistemul Xilinx și alți vendori. Suportat nativ în Vivado IP Integrator.'
+  },
+  {
+    topic: 'axi',
+    topicLabel: 'Unit 3 – AXI & Buses',
+    q: 'Ce tip de AXI se folosește pentru transfer de date video sau DSP în flux continuu?',
+    opts: [
+      'AXI4 (Full)',
+      'AXI4-Lite',
+      'AXI4-Stream',
+      'PLB (Processor Local Bus)'
+    ],
+    correct: 2,
+    explanation: '<strong>AXI4-Stream</strong>: nu are canal de adresă, transferul este întotdeauna de la master la slave, burst de lungime nelimitată. Ideal pentru date în flux continuu: video, procesare de semnal (DSP), FIFO-uri. Nu permite citire/scriere pe adrese — doar flux de date.'
+  },
+  {
+    topic: 'axi',
+    topicLabel: 'Unit 3 – AXI & Buses',
+    q: 'Care este rolul unui Bus Arbiter?',
+    opts: [
+      'Inițiază tranzacții pe bus',
+      'Răspunde la cereri de pe bus',
+      'Gestionează accesul la bus când mai mulți masteri vor să îl folosească simultan',
+      'Convertește semnale AXI în semnale PLB'
+    ],
+    correct: 2,
+    explanation: '<strong>Arbiter</strong>: gestionează accesul la bus prin 3 pași: 1) un device care vrea să devină master asertează un semnal de request; 2) arbiter-ul monitorizează cererile și acordă grant fiecărui master conform schemei de prioritate; 3) master-ul inițiază transferul când primește grant-ul. Mecanisme: Fixed priority, Round-robin, Hybrid.'
+  },
+  {
+    topic: 'axi',
+    topicLabel: 'Unit 3 – AXI & Buses',
+    q: 'De ce face parte AXI din familia AMBA?',
+    opts: [
+      'AMBA este un standard Xilinx exclusiv pentru FPGA',
+      'AMBA (Advanced Microcontroller Bus Architecture) este standardul ARM care include AXI, AHB și APB pentru interconectarea componentelor în SoC-uri',
+      'AMBA este un protocol de comunicație wireless',
+      'AMBA înlocuiește complet protocolul USB în sisteme embedded'
+    ],
+    correct: 1,
+    explanation: '<strong>AMBA (Advanced Microcontroller Bus Architecture)</strong> este un standard de la ARM pentru interconectarea componentelor în SoC-uri. Include: <strong>AXI</strong> (performanță înaltă), AHB (Advanced High-performance Bus), APB (Advanced Peripheral Bus pentru periferice lente), ATB. AXI4 a apărut în AMBA 4.0 (2010), adaptat special pentru FPGA-uri și SoC-uri.'
+  },
+];
+
+let currentTopic = 'all';
+let questions = [];
+let currentIdx = 0;
+let score = 0;
+let answered = false;
+
+function getQuestions(topic) {
+  const q = topic === 'all' ? [...ALL_QUESTIONS] : ALL_QUESTIONS.filter(q => q.topic === topic);
+  // shuffle
+  for (let i = q.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [q[i], q[j]] = [q[j], q[i]];
+  }
+  return q;
+}
+
+function buildTabs() {
+  const container = document.getElementById('tabs');
+  TOPICS.forEach(t => {
+    const btn = document.createElement('button');
+    btn.className = 'tab' + (t.id === 'all' ? ' active' : '');
+    btn.textContent = t.label;
+    btn.onclick = () => selectTopic(t.id);
+    btn.dataset.id = t.id;
+    container.appendChild(btn);
+  });
+}
+
+function selectTopic(id) {
+  currentTopic = id;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.id === id));
+  startQuiz();
+}
+
+function startQuiz() {
+  questions = getQuestions(currentTopic);
+  currentIdx = 0;
+  score = 0;
+  document.getElementById('score-panel').classList.remove('show');
+  document.getElementById('quiz-area').style.display = 'block';
+  showQuestion();
+}
+
+function showQuestion() {
+  answered = false;
+  const q = questions[currentIdx];
+  document.getElementById('q-topic').textContent = q.topicLabel;
+  document.getElementById('q-text').textContent = q.q;
+  document.getElementById('q-explanation').className = 'explanation';
+  document.getElementById('q-explanation').innerHTML = q.explanation;
+
+  const total = questions.length;
+  const done = currentIdx;
+  document.getElementById('prog-text').textContent = `Întrebarea ${currentIdx + 1} din ${total}`;
+  document.getElementById('prog-fill').style.width = `${(done / total) * 100}%`;
+
+  const nextBtn = document.getElementById('btn-next');
+  nextBtn.disabled = true;
+  nextBtn.textContent = currentIdx < questions.length - 1 ? 'Următoarea →' : 'Vezi rezultatul';
+
+  const optContainer = document.getElementById('q-options');
+  optContainer.innerHTML = '';
+  // shuffle options
+  const indices = [0, 1, 2, 3];
+  for (let i = indices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [indices[i], indices[j]] = [indices[j], indices[i]];
+  }
+  indices.forEach(i => {
+    const btn = document.createElement('button');
+    btn.className = 'option';
+    btn.textContent = q.opts[i];
+    btn.dataset.idx = i;
+    btn.onclick = () => selectAnswer(i, q.correct);
+    optContainer.appendChild(btn);
+  });
+}
+
+function selectAnswer(chosen, correct) {
+  if (answered) return;
+  answered = true;
+
+  if (chosen === correct) score++;
+
+  document.querySelectorAll('.option').forEach(btn => {
+    btn.disabled = true;
+    const idx = parseInt(btn.dataset.idx);
+    if (idx === correct) btn.classList.add('correct');
+    else if (idx === chosen && chosen !== correct) btn.classList.add('wrong');
+  });
+
+  document.getElementById('q-explanation').classList.add('show');
+  document.getElementById('btn-next').disabled = false;
+}
+
+document.getElementById('btn-next').onclick = () => {
+  if (!answered) return;
+  currentIdx++;
+  if (currentIdx >= questions.length) {
+    showScore();
+  } else {
+    showQuestion();
+  }
+};
+
+function showScore() {
+  document.getElementById('quiz-area').style.display = 'none';
+  const panel = document.getElementById('score-panel');
+  panel.classList.add('show');
+  const pct = Math.round((score / questions.length) * 100);
+  document.getElementById('score-num').textContent = `${score}/${questions.length}`;
+
+  let msg, sub;
+  if (pct >= 80) {
+    msg = '🎉 Excelent! Ești pregătită!';
+    sub = 'Cunoști materialul foarte bine. Succes la examen!';
+  } else if (pct >= 60) {
+    msg = '👍 Bine, dar mai repetă!';
+    sub = 'Reverezi explicațiile de la întrebările greșite și ești gata.';
+  } else {
+    msg = '📚 Mai ai de lucru!';
+    sub = 'Recitește rezumatul și încearcă din nou. Poți!';
+  }
+  document.getElementById('score-msg').textContent = msg;
+  document.getElementById('score-sub').textContent = sub;
+}
+
+function restart() {
+  startQuiz();
+}
+
+buildTabs();
+startQuiz();
+</script>
+</body>
+</html>
